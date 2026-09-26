@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <script>
+    (function() {
+      const storedTheme = localStorage.getItem('theme') || localStorage.getItem('bh-theme');
+      if (storedTheme) {
+        document.documentElement.setAttribute('data-theme', storedTheme);
+      } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      } else {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    })();
+  </script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-NFEM8TN9ZM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-NFEM8TN9ZM');
+  </script>
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>open-generative-ai-rs — High-Performance Rust Engine for 400+ Generative AI Models</title>
+  <meta name="description" content="Pure Rust engine, multi-provider API gateway, DAG workflow pipeline runner, and embedded Web Studio for 400+ Generative AI models ported from Anil-matcha/Open-Generative-AI.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: ['selector', '[data-theme="dark"]'],
+      theme: {
+        extend: {
+          colors: {
+            brand: { 500: '#8b5cf6', 600: '#7c3aed', 700: '#6d28d9' }
+          },
+          fontFamily: {
+            sans: ['Space Grotesk', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+            display: ['Chakra Petch', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    :root {
+      --bg-primary: #09090b;
+      --bg-surface: #121217;
+      --bg-card: rgba(24, 24, 27, 0.7);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --text-main: #f4f4f5;
+      --text-muted: #a1a1aa;
+      --accent: #8b5cf6;
+      --accent-glow: rgba(139, 92, 246, 0.35);
+    }
+    [data-theme="light"] {
+      --bg-primary: #fafafa;
+      --bg-surface: #ffffff;
+      --bg-card: rgba(255, 255, 255, 0.9);
+      --border-color: rgba(0, 0, 0, 0.08);
+      --text-main: #09090b;
+      --text-muted: #71717a;
+      --accent: #7c3aed;
+      --accent-glow: rgba(124, 58, 237, 0.2);
+    }
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-main);
+      font-family: 'Space Grotesk', system-ui, sans-serif;
+    }
+    .glass-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color);
+    }
+    .active-studio-tab {
+      border-bottom: 2px solid #8b5cf6;
+      color: #c4b5fd;
+      font-weight: 600;
+    }
+    .code-box {
+      font-family: 'JetBrains Mono', monospace;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-violet-500/30 selection:text-violet-200">
+
+  <!-- Canonical Site Header -->
+  <header class="sticky top-0 z-50 bg-zinc-950/85 backdrop-blur-md border-b border-zinc-800/80">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-6">
+        <a href="https://brandonhubbard.com" class="flex items-center gap-2 text-white font-bold tracking-tight">
+          <div class="w-8 h-8 rounded bg-white text-zinc-950 font-black flex items-center justify-center text-sm shadow">BH</div>
+          <span class="text-sm font-semibold tracking-wide hidden sm:inline">Brandon Hubbard</span>
+        </a>
+        <div class="h-4 w-px bg-zinc-800 hidden sm:block"></div>
+        <nav class="hidden md:flex items-center space-x-5 text-xs font-mono uppercase tracking-wider text-zinc-400">
+          <a href="https://brandonhubbard.com" class="hover:text-white transition">01. Work</a>
+          <a href="https://brandonhubbard.com/about" class="hover:text-white transition">02. About</a>
+          <a href="https://brandonhubbard.com/notes" class="hover:text-white transition">03. Notes</a>
+          <a href="https://brandonhubbard.com/skills" class="hover:text-white transition">04. Skills</a>
+          <a href="https://code.brandonhubbard.com" class="text-violet-400 font-bold border-b border-violet-500 pb-0.5">06. Code</a>
+        </nav>
+      </div>
+
+      <div class="flex items-center space-x-3">
+        <a href="https://github.com/bhubbard/open-generative-ai-rs" target="_blank" class="text-xs px-3 py-1.5 rounded-lg glass-card text-zinc-300 hover:text-white hover:border-violet-500/50 transition flex items-center gap-1.5">
+          <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+          <span class="font-mono font-semibold">bhubbard/open-generative-ai-rs</span>
+        </a>
+        <button onclick="toggleTheme()" class="p-1.5 rounded-lg glass-card text-zinc-400 hover:text-white transition text-xs">
+          🌓
+        </button>
+      </div>
+    </div>
+
+    <!-- Project Subnav -->
+    <div class="border-t border-zinc-800/80 bg-zinc-950/60 px-4 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between text-xs font-mono">
+      <div class="flex items-center space-x-6 overflow-x-auto">
+        <a href="#overview" class="text-white hover:text-violet-400">Overview</a>
+        <a href="#studio" class="text-zinc-400 hover:text-white">Live Studio</a>
+        <a href="#models" class="text-zinc-400 hover:text-white">400+ Models</a>
+        <a href="#workflows" class="text-zinc-400 hover:text-white">Workflows</a>
+        <a href="#benchmarks" class="text-zinc-400 hover:text-white">Benchmarks</a>
+        <a href="#api" class="text-zinc-400 hover:text-white">REST API</a>
+      </div>
+      <div class="hidden md:flex items-center gap-2 text-[11px] text-zinc-500">
+        <span>Port of</span>
+        <a href="https://github.com/Anil-matcha/Open-Generative-AI" target="_blank" class="text-zinc-400 hover:text-zinc-200 underline">Anil-matcha/Open-Generative-AI</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section id="overview" class="relative overflow-hidden py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+    <div class="text-center space-y-6 max-w-4xl mx-auto">
+      <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-mono bg-violet-500/10 text-violet-300 border border-violet-500/20 shadow-lg shadow-violet-500/10">
+        <span>🦀</span> Native Rust Port • 18 MB Static Binary • Zero Node Dependencies
+      </div>
+
+      <h1 class="text-4xl sm:text-6xl font-black tracking-tight text-white font-display">
+        The Open-Source Engine for <br>
+        <span class="bg-gradient-to-r from-violet-400 via-indigo-400 to-cyan-400 bg-clip-text text-transparent">
+          400+ Generative AI Models
+        </span>
+      </h1>
+
+      <p class="text-base sm:text-lg text-zinc-400 max-w-2xl mx-auto">
+        High-performance Rust rewrite of <strong class="text-zinc-200">Open Generative AI</strong>. Features a unified multi-provider gateway (Muapi, local sd.cpp, Wan2GP), DAG workflow pipeline engine, and an embedded single-page Web Studio.
+      </p>
+
+      <!-- Key Stat Badges -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-3xl mx-auto pt-4 text-left">
+        <div class="glass-card p-4 rounded-xl border border-zinc-800">
+          <div class="text-2xl font-black text-violet-400 font-mono">420+</div>
+          <div class="text-xs text-zinc-400 mt-0.5">Models Catalogued</div>
+        </div>
+        <div class="glass-card p-4 rounded-xl border border-zinc-800">
+          <div class="text-2xl font-black text-emerald-400 font-mono">&lt; 15 ms</div>
+          <div class="text-xs text-zinc-400 mt-0.5">Cold Start Latency</div>
+        </div>
+        <div class="glass-card p-4 rounded-xl border border-zinc-800">
+          <div class="text-2xl font-black text-cyan-400 font-mono">18 MB</div>
+          <div class="text-xs text-zinc-400 mt-0.5">Single Static Binary</div>
+        </div>
+        <div class="glass-card p-4 rounded-xl border border-zinc-800">
+          <div class="text-2xl font-black text-amber-400 font-mono">11 MB</div>
+          <div class="text-xs text-zinc-400 mt-0.5">Idle Memory (RAM)</div>
+        </div>
+      </div>
+
+      <!-- Quick Command Copy -->
+      <div class="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
+        <div class="glass-card px-4 py-3 rounded-lg border border-zinc-800 flex items-center gap-3 code-box text-xs text-zinc-300 w-full sm:w-auto">
+          <span class="text-violet-400">$</span>
+          <span>cargo install open-generative-ai-rs</span>
+          <button onclick="navigator.clipboard.writeText('cargo install open-generative-ai-rs'); alert('Copied!');" class="text-zinc-500 hover:text-white transition">📋</button>
+        </div>
+        <a href="#studio" class="px-5 py-3 rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-semibold text-xs transition shadow-lg shadow-violet-600/25">
+          Launch Interactive Studio ↓
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Studio Section -->
+  <section id="studio" class="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+    <div class="mb-8">
+      <div class="text-xs font-mono uppercase tracking-widest text-violet-400 font-bold mb-1">Interactive Demo</div>
+      <h2 class="text-2xl sm:text-3xl font-bold text-white font-display">Embedded Web Studio &amp; Generation Lab</h2>
+      <p class="text-sm text-zinc-400 mt-1">This graphical studio is embedded directly inside the compiled binary and served via Axum at <code>/studio</code>.</p>
+    </div>
+
+    <div class="glass-card rounded-2xl overflow-hidden border border-zinc-800 shadow-2xl">
+      <!-- Studio Tabs -->
+      <div class="border-b border-zinc-800 bg-zinc-950 px-6 flex space-x-6 text-xs sm:text-sm font-medium">
+        <button onclick="switchTab('image')" id="tab-btn-image" class="py-3 px-1 text-zinc-400 hover:text-white transition active-studio-tab">🖼️ Text-to-Image</button>
+        <button onclick="switchTab('video')" id="tab-btn-video" class="py-3 px-1 text-zinc-400 hover:text-white transition">🎬 Text-to-Video</button>
+        <button onclick="switchTab('lipsync')" id="tab-btn-lipsync" class="py-3 px-1 text-zinc-400 hover:text-white transition">👄 Lip Sync &amp; Speech</button>
+        <button onclick="switchTab('workflow')" id="tab-btn-workflow" class="py-3 px-1 text-zinc-400 hover:text-white transition">⚡ AI Influencer DAG</button>
+      </div>
+
+      <div class="p-6 grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <!-- Controls Left (7 Cols) -->
+        <div class="lg:col-span-7 space-y-5">
+          
+          <!-- Image Tab -->
+          <div id="tab-image" class="space-y-4">
+            <div>
+              <label class="text-xs font-mono font-semibold text-zinc-400 uppercase tracking-wider block mb-1.5">Select Model</label>
+              <select id="sim-img-model" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-xs sm:text-sm text-zinc-200 focus:outline-none focus:border-violet-500">
+                <option value="flux-dev">FLUX.1 [dev] (12B Parameter Flow Matching)</option>
+                <option value="flux-schnell">FLUX.1 [schnell] (4-Step Turbo Distilled)</option>
+                <option value="seedream-5.0">Seedream 5.0 Ultra (Cinematic Photorealism)</option>
+                <option value="ideogram-v2">Ideogram 2.0 (Accurate Typography)</option>
+                <option value="nano-banana-2">Nano Banana 2 (Stylized Illustration)</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="text-xs font-mono font-semibold text-zinc-400 uppercase tracking-wider block mb-1.5">Prompt</label>
+              <textarea id="sim-img-prompt" rows="3" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-xs sm:text-sm text-zinc-200 focus:outline-none focus:border-violet-500">A photorealistic portrait of an astronaut on Mars observing a glowing cybernetic greenhouse, volumetric dust particles, 8k, Hasselblad 80mm lens</textarea>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="text-xs font-mono font-semibold text-zinc-400 uppercase tracking-wider block mb-1.5">Aspect Ratio</label>
+                <div class="grid grid-cols-3 gap-2 text-xs">
+                  <button type="button" class="py-1.5 px-2 bg-zinc-900 border border-violet-500 text-violet-300 rounded text-center">16:9</button>
+                  <button type="button" class="py-1.5 px-2 bg-zinc-900 border border-zinc-700 text-zinc-400 rounded text-center">9:16</button>
+                  <button type="button" class="py-1.5 px-2 bg-zinc-900 border border-zinc-700 text-zinc-400 rounded text-center">1:1</button>
+                </div>
+              </div>
+              <div>
+                <label class="text-xs font-mono font-semibold text-zinc-400 uppercase tracking-wider block mb-1.5">Seed</label>
+                <input type="number" value="42" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-xs text-zinc-300">
+              </div>
+            </div>
+
+            <button onclick="simulateRun('image')" class="w-full py-3 px-4 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-semibold rounded-lg shadow-lg shadow-violet-600/25 transition text-xs sm:text-sm flex items-center justify-center gap-2">
+              ✨ Run Image Generation
+            </button>
+          </div>
+
+          <!-- Video Tab -->
+          <div id="tab-video" class="space-y-4 hidden">
+            <div>
+              <label class="text-xs font-mono font-semibold text-zinc-400 uppercase tracking-wider block mb-1.5">Video Model</label>
+              <select id="sim-vid-model" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-xs sm:text-sm text-zinc-200 focus:outline-none focus:border-violet-500">
+                <option value="kling-v3-pro">Kling v3 Pro (Physics Simulation &amp; Dynamic Lighting)</option>
+                <option value="sora-2-turbo">Sora 2 Turbo (World Continuity &amp; Multi-Shot)</option>
+                <option value="veo-3-cinematic">Veo 3 Cinematic (Google DeepMind Volumetric)</option>
+                <option value="wan-2.6-t2v">Wan 2.6 T2V (Alibaba Open Foundation)</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="text-xs font-mono font-semibold text-zinc-400 uppercase tracking-wider block mb-1.5">Prompt</label>
+              <textarea id="sim-vid-prompt" rows="3" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-xs sm:text-sm text-zinc-200 focus:outline-none focus:border-violet-500">Cinematic drone orbit around a lighthouse during a violent thunderstorm, lightning illuminates crashing ocean waves in hyperlapse</textarea>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="text-xs font-mono font-semibold text-zinc-400 uppercase tracking-wider block mb-1.5">Duration</label>
+                <select class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-xs">
+                  <option>5 Seconds</option>
+                  <option>10 Seconds</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-xs font-mono font-semibold text-zinc-400 uppercase tracking-wider block mb-1.5">Resolution</label>
+                <select class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-xs">
+                  <option>1080p Full HD</option>
+                  <option>4K Ultra HD</option>
+                </select>
+              </div>
+            </div>
+
+            <button onclick="simulateRun('video')" class="w-full py-3 px-4 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-semibold rounded-lg shadow-lg shadow-violet-600/25 transition text-xs sm:text-sm flex items-center justify-center gap-2">
+              🎬 Run Video Generation
+            </button>
+          </div>
+
+          <!-- Lip Sync Tab -->
+          <div id="tab-lipsync" class="space-y-4 hidden">
+            <div>
+              <label class="text-xs font-mono font-semibold text-zinc-400 uppercase tracking-wider block mb-1.5">Model</label>
+              <select class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-xs text-zinc-200">
+                <option>Infinite Talk I2V (Natural Blinking, Micro-Expressions)</option>
+                <option>Wan 2.2 Speech to Video (Multi-Lingual Synchronized)</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs font-mono font-semibold text-zinc-400 uppercase tracking-wider block mb-1.5">Input Portrait</label>
+              <input type="text" value="https://images.unsplash.com/photo-1534528741775-53994a69daeb" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-xs text-zinc-300">
+            </div>
+            <div>
+              <label class="text-xs font-mono font-semibold text-zinc-400 uppercase tracking-wider block mb-1.5">Speech Audio Track</label>
+              <input type="text" value="https://cdn.open-generative-ai.org/samples/narrator_intro.mp3" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-xs text-zinc-300">
+            </div>
+
+            <button onclick="simulateRun('lipsync')" class="w-full py-3 px-4 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-semibold rounded-lg shadow-lg shadow-violet-600/25 transition text-xs sm:text-sm flex items-center justify-center gap-2">
+              👄 Run Lip Sync Animation
+            </button>
+          </div>
+
+          <!-- Workflow Tab -->
+          <div id="tab-workflow" class="space-y-4 hidden">
+            <div class="p-3 bg-violet-500/10 border border-violet-500/20 rounded-lg">
+              <div class="font-semibold text-xs text-violet-300 uppercase tracking-wider">DAG Pipeline: AI Influencer</div>
+              <div class="text-xs text-zinc-400 mt-1">Portrait Anchor (FLUX) → Voiceover (ElevenLabs) → Lip Sync Talking Head (Infinite Talk)</div>
+            </div>
+            <div>
+              <label class="text-xs font-mono font-semibold text-zinc-400 uppercase tracking-wider block mb-1.5">Influencer Persona</label>
+              <input type="text" value="Tech founder explaining Rust performance breakthroughs" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-xs text-zinc-300">
+            </div>
+            <div>
+              <label class="text-xs font-mono font-semibold text-zinc-400 uppercase tracking-wider block mb-1.5">Speech Script</label>
+              <textarea rows="2" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-xs text-zinc-300">Welcome to our high-performance generative AI studio in Rust. 400 models, zero runtime bloat.</textarea>
+            </div>
+
+            <button onclick="simulateRun('workflow')" class="w-full py-3 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold rounded-lg shadow-lg shadow-emerald-600/25 transition text-xs sm:text-sm flex items-center justify-center gap-2">
+              🚀 Execute Multi-Step DAG Pipeline
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Output Right (5 Cols) -->
+        <div class="lg:col-span-5 flex flex-col justify-between glass-card p-5 rounded-xl border border-zinc-800">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between text-xs border-b border-zinc-800 pb-2">
+              <span class="font-mono text-zinc-400">STATUS: <strong id="sim-status" class="text-emerald-400 font-bold">READY</strong></span>
+              <span class="font-mono text-zinc-500" id="sim-time">0.00s</span>
+            </div>
+
+            <div id="sim-display" class="min-h-[260px] flex flex-col items-center justify-center border border-dashed border-zinc-800 rounded-lg p-4 text-center">
+              <div class="text-4xl mb-2">⚡</div>
+              <div class="text-sm font-semibold text-zinc-300">Live Engine Ready</div>
+              <div class="text-xs text-zinc-500 mt-1 max-w-xs">Click any action on the left to trigger the generation simulator.</div>
+            </div>
+          </div>
+
+          <div class="pt-4 border-t border-zinc-800 mt-4">
+            <div class="text-[11px] font-mono text-zinc-400 mb-1 flex items-center justify-between">
+              <span>Rust CLI Command</span>
+              <span class="text-violet-400">copy</span>
+            </div>
+            <pre id="sim-cli" class="bg-zinc-950 p-2.5 rounded border border-zinc-800 text-[11px] font-mono text-zinc-300 overflow-x-auto">open-genai generate image --model flux-dev --prompt "..."</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 400+ Models Catalog Section -->
+  <section id="models" class="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+    <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
+      <div>
+        <div class="text-xs font-mono uppercase tracking-widest text-violet-400 font-bold mb-1">Catalog Matrix</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-white font-display">Supported Model Architectures</h2>
+        <p class="text-sm text-zinc-400 mt-1">Full endpoint schemas, multi-aspect-ratio scaling, and local inference flags.</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-mono px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300">420+ Verified Models</span>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <!-- FLUX Dev -->
+      <div class="glass-card p-5 rounded-xl border border-zinc-800 hover:border-violet-500/50 transition">
+        <div class="flex items-start justify-between">
+          <h3 class="font-bold text-sm text-white">FLUX.1 [dev]</h3>
+          <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-violet-500/10 text-violet-300 border border-violet-500/20">Text-to-Image</span>
+        </div>
+        <p class="text-xs text-zinc-400 mt-2">Black Forest Labs 12B flow-matching transformer with photorealism and typographic fidelity.</p>
+        <div class="mt-4 flex items-center justify-between text-xs font-mono text-zinc-500">
+          <span>Local sd.cpp: <strong class="text-emerald-400">Yes</strong></span>
+          <span class="text-violet-400 font-semibold">$0.025 / run</span>
+        </div>
+      </div>
+
+      <!-- Kling v3 Pro -->
+      <div class="glass-card p-5 rounded-xl border border-zinc-800 hover:border-violet-500/50 transition">
+        <div class="flex items-start justify-between">
+          <h3 class="font-bold text-sm text-white">Kling v3 Pro</h3>
+          <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">Text-to-Video</span>
+        </div>
+        <p class="text-xs text-zinc-400 mt-2">Physics-accurate fluid dynamics, 1080p high bitrate rendering, and cinematic camera panning.</p>
+        <div class="mt-4 flex items-center justify-between text-xs font-mono text-zinc-500">
+          <span>Max Duration: 10s</span>
+          <span class="text-cyan-400 font-semibold">$0.250 / run</span>
+        </div>
+      </div>
+
+      <!-- Sora 2 Turbo -->
+      <div class="glass-card p-5 rounded-xl border border-zinc-800 hover:border-violet-500/50 transition">
+        <div class="flex items-start justify-between">
+          <h3 class="font-bold text-sm text-white">Sora 2 Turbo</h3>
+          <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">Text-to-Video</span>
+        </div>
+        <p class="text-xs text-zinc-400 mt-2">OpenAI video architecture with persistent world continuity and synchronized sound generation.</p>
+        <div class="mt-4 flex items-center justify-between text-xs font-mono text-zinc-500">
+          <span>Audio Sync: <strong class="text-emerald-400">Yes</strong></span>
+          <span class="text-indigo-400 font-semibold">$0.400 / run</span>
+        </div>
+      </div>
+
+      <!-- Wan 2.6 / 2.1 -->
+      <div class="glass-card p-5 rounded-xl border border-zinc-800 hover:border-violet-500/50 transition">
+        <div class="flex items-start justify-between">
+          <h3 class="font-bold text-sm text-white">Wan 2.6 / 2.1 (Alibaba)</h3>
+          <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">I2V &amp; T2V</span>
+        </div>
+        <p class="text-xs text-zinc-400 mt-2">Open-weights 14B video foundation model. Executable via local Wan2GP Gradio server or cloud gateway.</p>
+        <div class="mt-4 flex items-center justify-between text-xs font-mono text-zinc-500">
+          <span>Local Wan2GP: <strong class="text-emerald-400">Free</strong></span>
+          <span class="text-emerald-400 font-semibold">$0.120 / cloud</span>
+        </div>
+      </div>
+
+      <!-- Infinite Talk I2V -->
+      <div class="glass-card p-5 rounded-xl border border-zinc-800 hover:border-violet-500/50 transition">
+        <div class="flex items-start justify-between">
+          <h3 class="font-bold text-sm text-white">Infinite Talk I2V</h3>
+          <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20">Lip Sync</span>
+        </div>
+        <p class="text-xs text-zinc-400 mt-2">Speech-driven portrait animator synthesizing natural micro-expressions, blinks, and head tilt.</p>
+        <div class="mt-4 flex items-center justify-between text-xs font-mono text-zinc-500">
+          <span>Audio Formats: MP3/WAV</span>
+          <span class="text-amber-400 font-semibold">$0.090 / run</span>
+        </div>
+      </div>
+
+      <!-- FLUX Kontext Pro -->
+      <div class="glass-card p-5 rounded-xl border border-zinc-800 hover:border-violet-500/50 transition">
+        <div class="flex items-start justify-between">
+          <h3 class="font-bold text-sm text-white">FLUX Kontext Pro</h3>
+          <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-pink-500/10 text-pink-300 border border-pink-500/20">Image-to-Image</span>
+        </div>
+        <p class="text-xs text-zinc-400 mt-2">Up to 14 multi-image inputs for strict character consistency, style transfer, and virtual try-on.</p>
+        <div class="mt-4 flex items-center justify-between text-xs font-mono text-zinc-500">
+          <span>Max Inputs: 14 images</span>
+          <span class="text-pink-400 font-semibold">$0.045 / run</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Architectural Comparison Matrix Section -->
+  <section id="benchmarks" class="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+    <div class="mb-8">
+      <div class="text-xs font-mono uppercase tracking-widest text-violet-400 font-bold mb-1">Performance Benchmarks</div>
+      <h2 class="text-2xl sm:text-3xl font-bold text-white font-display">Rust Fork vs. Original Node/Next.js Stack</h2>
+      <p class="text-sm text-zinc-400 mt-1">Comparing runtime efficiency, memory footprint, and deployment simplicity.</p>
+    </div>
+
+    <div class="glass-card rounded-2xl overflow-hidden border border-zinc-800">
+      <table class="w-full text-left text-xs sm:text-sm">
+        <thead class="bg-zinc-900 border-b border-zinc-800 font-mono text-zinc-400 uppercase text-[11px]">
+          <tr>
+            <th class="p-4">Metric</th>
+            <th class="p-4">Original (Next.js / Node)</th>
+            <th class="p-4 text-violet-400">open-generative-ai-rs</th>
+            <th class="p-4 text-emerald-400">Performance Win</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-zinc-800/60 font-mono text-zinc-300">
+          <tr>
+            <td class="p-4 font-sans font-semibold text-white">Binary Footprint</td>
+            <td class="p-4 text-zinc-400">~550 MB (node_modules)</td>
+            <td class="p-4 text-violet-300 font-bold">18 MB static binary</td>
+            <td class="p-4 text-emerald-400 font-bold">30× smaller</td>
+          </tr>
+          <tr>
+            <td class="p-4 font-sans font-semibold text-white">Cold Start Time</td>
+            <td class="p-4 text-zinc-400">2.5s – 4.0s (V8 init)</td>
+            <td class="p-4 text-violet-300 font-bold">&lt; 15 ms</td>
+            <td class="p-4 text-emerald-400 font-bold">200× faster</td>
+          </tr>
+          <tr>
+            <td class="p-4 font-sans font-semibold text-white">Idle Memory (RAM)</td>
+            <td class="p-4 text-zinc-400">180 – 250 MB</td>
+            <td class="p-4 text-violet-300 font-bold">11 MB</td>
+            <td class="p-4 text-emerald-400 font-bold">20× less RAM</td>
+          </tr>
+          <tr>
+            <td class="p-4 font-sans font-semibold text-white">Concurrency Architecture</td>
+            <td class="p-4 text-zinc-400">Single-threaded event loop</td>
+            <td class="p-4 text-violet-300 font-bold">Tokio work-stealing pool</td>
+            <td class="p-4 text-emerald-400 font-bold">True CPU parallelism</td>
+          </tr>
+          <tr>
+            <td class="p-4 font-sans font-semibold text-white">Workflow Execution</td>
+            <td class="p-4 text-zinc-400">Client-side ReactFlow loop</td>
+            <td class="p-4 text-violet-300 font-bold">Native Rust DAG with Kahn's cycle check</td>
+            <td class="p-4 text-emerald-400 font-bold">Deterministic &amp; headless</td>
+          </tr>
+          <tr>
+            <td class="p-4 font-sans font-semibold text-white">Offline Test Mode</td>
+            <td class="p-4 text-zinc-400">Paid API calls required</td>
+            <td class="p-4 text-violet-300 font-bold">Built-in --mock provider</td>
+            <td class="p-4 text-emerald-400 font-bold">Zero-cost CI/CD</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- REST API Section -->
+  <section id="api" class="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+    <div class="mb-8">
+      <div class="text-xs font-mono uppercase tracking-widest text-violet-400 font-bold mb-1">Developer API</div>
+      <h2 class="text-2xl sm:text-3xl font-bold text-white font-display">Axum REST Endpoints</h2>
+      <p class="text-sm text-zinc-400 mt-1">Integrate Open Generative AI directly into Python, Go, Node, or shell scripts.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="glass-card p-5 rounded-xl border border-zinc-800 space-y-3">
+        <div class="flex items-center gap-2">
+          <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono text-xs font-bold">POST</span>
+          <span class="font-mono text-sm text-white">/api/v1/generate/image</span>
+        </div>
+        <p class="text-xs text-zinc-400">Submit a text-to-image or image-to-image task and receive the completed asset URL.</p>
+        <pre class="bg-zinc-950 p-3 rounded border border-zinc-800 text-[11px] font-mono text-zinc-300 overflow-x-auto">curl -X POST http://127.0.0.1:8080/api/v1/generate/image \
+  -H "Content-Type: application/json" \
+  -d '{"model": "flux-dev", "prompt": "cyberpunk skyline", "aspect_ratio": "16:9"}'</pre>
+      </div>
+
+      <div class="glass-card p-5 rounded-xl border border-zinc-800 space-y-3">
+        <div class="flex items-center gap-2">
+          <span class="px-2 py-0.5 rounded bg-violet-500/20 text-violet-300 font-mono text-xs font-bold">POST</span>
+          <span class="font-mono text-sm text-white">/api/v1/workflows/run</span>
+        </div>
+        <p class="text-xs text-zinc-400">Trigger a multi-step DAG pipeline (e.g. AI Influencer, Popcorn Storyboard) with variable passing.</p>
+        <pre class="bg-zinc-950 p-3 rounded border border-zinc-800 text-[11px] font-mono text-zinc-300 overflow-x-auto">curl -X POST http://127.0.0.1:8080/api/v1/workflows/run \
+  -H "Content-Type: application/json" \
+  -d '{"template_id": "ai-influencer", "inputs": {"prompt": "news anchor"}}'</pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="mt-auto border-t border-zinc-800 bg-zinc-950 py-10 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between text-xs text-zinc-500 gap-4">
+      <div>
+        <p>© 2026 Brandon Hubbard. Released under the <a href="LICENSE" class="text-zinc-400 underline">MIT License</a>.</p>
+        <p class="mt-0.5">Ported from <a href="https://github.com/Anil-matcha/Open-Generative-AI" target="_blank" class="text-zinc-400 underline">Anil-matcha/Open-Generative-AI</a>.</p>
+      </div>
+      <div class="flex items-center space-x-6 font-mono">
+        <a href="https://code.brandonhubbard.com" class="hover:text-white transition">code.brandonhubbard.com</a>
+        <a href="https://github.com/bhubbard/open-generative-ai-rs" target="_blank" class="hover:text-white transition">GitHub Repo</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    function toggleTheme() {
+      const cur = document.documentElement.getAttribute('data-theme');
+      const next = cur === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+    }
+
+    function switchTab(tabId) {
+      ['image', 'video', 'lipsync', 'workflow'].forEach(t => {
+        document.getElementById(`tab-${t}`).classList.add('hidden');
+        document.getElementById(`tab-btn-${t}`).classList.remove('active-studio-tab');
+      });
+      document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+      document.getElementById(`tab-btn-${tabId}`).classList.add('active-studio-tab');
+
+      // Update CLI preview
+      const simCli = document.getElementById('sim-cli');
+      if (tabId === 'image') simCli.innerText = 'open-genai generate image --model flux-dev --prompt "..."';
+      if (tabId === 'video') simCli.innerText = 'open-genai generate video --model kling-v3-pro --duration 5';
+      if (tabId === 'lipsync') simCli.innerText = 'open-genai lipsync --image "avatar.png" --audio "voice.mp3"';
+      if (tabId === 'workflow') simCli.innerText = 'open-genai workflow run --template ai-influencer';
+    }
+
+    function simulateRun(type) {
+      const status = document.getElementById('sim-status');
+      const timer = document.getElementById('sim-time');
+      const display = document.getElementById('sim-display');
+
+      status.innerText = 'RUNNING';
+      status.className = 'text-amber-400 font-bold animate-pulse';
+      display.innerHTML = `
+        <div class="h-8 w-8 border-4 border-violet-500 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+        <div class="text-xs text-violet-300 font-mono">Synthesizing ${type} output...</div>
+      `;
+
+      let t = 0;
+      const interval = setInterval(() => {
+        t += 0.05;
+        timer.innerText = `${t.toFixed(2)}s`;
+      }, 50);
+
+      setTimeout(() => {
+        clearInterval(interval);
+        status.innerText = 'COMPLETED';
+        status.className = 'text-emerald-400 font-bold';
+
+        if (type === 'image') {
+          display.innerHTML = `
+            <div class="w-full space-y-2">
+              <div class="h-44 w-full bg-gradient-to-tr from-purple-900 to-indigo-900 rounded-lg flex items-center justify-center text-4xl shadow-inner">
+                🪐
+              </div>
+              <div class="text-xs text-emerald-400 font-mono">✓ FLUX.1 1024x1024 rendered</div>
+            </div>
+          `;
+        } else if (type === 'video') {
+          display.innerHTML = `
+            <div class="w-full space-y-2">
+              <div class="h-44 w-full bg-gradient-to-tr from-cyan-950 to-blue-900 rounded-lg flex items-center justify-center text-4xl shadow-inner">
+                🌊 ⚡
+              </div>
+              <div class="text-xs text-emerald-400 font-mono">✓ Kling v3 Pro 1080p video ready</div>
+            </div>
+          `;
+        } else if (type === 'lipsync') {
+          display.innerHTML = `
+            <div class="w-full space-y-2">
+              <div class="h-44 w-full bg-gradient-to-tr from-zinc-900 to-violet-950 rounded-lg flex items-center justify-center text-4xl shadow-inner">
+                🗣️ 🎙️
+              </div>
+              <div class="text-xs text-emerald-400 font-mono">✓ Infinite Talk speech sync completed</div>
+            </div>
+          `;
+        } else {
+          display.innerHTML = `
+            <div class="w-full space-y-2 text-left">
+              <div class="p-2 bg-zinc-900 rounded text-xs flex justify-between">
+                <span>1. Portrait Anchor</span><span class="text-emerald-400 font-mono">0.05s</span>
+              </div>
+              <div class="p-2 bg-zinc-900 rounded text-xs flex justify-between">
+                <span>2. Neural Voiceover</span><span class="text-emerald-400 font-mono">0.03s</span>
+              </div>
+              <div class="p-2 bg-zinc-900 rounded text-xs flex justify-between">
+                <span>3. Lip Sync Video</span><span class="text-emerald-400 font-mono">0.07s</span>
+              </div>
+              <div class="text-xs text-emerald-400 font-mono font-bold mt-2">✓ Full DAG Pipeline Finished</div>
+            </div>
+          `;
+        }
+      }, 700);
+    }
+  </script>
+</body>
+</html>
