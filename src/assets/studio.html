@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Open Generative AI Studio (Rust)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: { 500: '#8b5cf6', 600: '#7c3aed', 700: '#6d28d9' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background-color: #09090b; color: #f4f4f5; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    .glass-card { background: rgba(24, 24, 27, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
+    .active-tab { border-bottom: 2px solid #8b5cf6; color: #c4b5fd; font-weight: 600; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+  <!-- Header -->
+  <header class="border-b border-zinc-800 bg-zinc-950/80 backdrop-blur sticky top-0 z-50 px-6 py-3.5 flex items-center justify-between">
+    <div class="flex items-center space-x-3">
+      <div class="h-8 w-8 rounded-lg bg-gradient-to-tr from-violet-600 to-indigo-500 flex items-center justify-center font-bold text-white shadow-lg shadow-violet-500/30">
+        🦀
+      </div>
+      <div>
+        <h1 class="text-base font-bold tracking-tight text-white flex items-center gap-2">
+          Open Generative AI <span class="text-xs px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300 font-mono">Rust Engine</span>
+        </h1>
+        <p class="text-xs text-zinc-400">400+ Models • Multi-Provider Gateway • Local sd.cpp & Wan2GP</p>
+      </div>
+    </div>
+    <div class="flex items-center space-x-3">
+      <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+        <span class="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Engine Online
+      </span>
+      <button onclick="openSettingsModal()" class="text-xs px-3 py-1.5 rounded-md glass-card hover:bg-zinc-800 transition">
+        ⚙️ Settings / API Key
+      </button>
+    </div>
+  </header>
+
+  <!-- Navigation Tabs -->
+  <div class="border-b border-zinc-800 bg-zinc-950 px-6 flex space-x-6 text-sm">
+    <button onclick="switchTab('image')" id="tab-btn-image" class="py-3 px-1 text-zinc-400 hover:text-white transition active-tab">🖼️ Image Studio</button>
+    <button onclick="switchTab('video')" id="tab-btn-video" class="py-3 px-1 text-zinc-400 hover:text-white transition">🎬 Video Studio</button>
+    <button onclick="switchTab('lipsync')" id="tab-btn-lipsync" class="py-3 px-1 text-zinc-400 hover:text-white transition">👄 Lip Sync & Audio</button>
+    <button onclick="switchTab('workflow')" id="tab-btn-workflow" class="py-3 px-1 text-zinc-400 hover:text-white transition">⚡ Workflows (Influencer & Storyboard)</button>
+    <button onclick="switchTab('catalog')" id="tab-btn-catalog" class="py-3 px-1 text-zinc-400 hover:text-white transition">📚 Models Catalog (400+)</button>
+  </div>
+
+  <!-- Main Content Container -->
+  <main class="flex-1 p-6 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+    <!-- Left Controls Panel (7 Cols) -->
+    <div class="lg:col-span-7 space-y-6">
+
+      <!-- IMAGE STUDIO TAB -->
+      <div id="tab-image" class="space-y-4">
+        <div class="glass-card p-5 rounded-xl space-y-4">
+          <div class="flex items-center justify-between">
+            <label class="text-xs font-semibold text-zinc-300 uppercase tracking-wider">Model</label>
+            <span class="text-xs text-violet-400 font-mono" id="img-model-cost">$0.025 / run</span>
+          </div>
+          <select id="img-model" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-violet-500 focus:outline-none">
+            <option value="flux-dev">FLUX.1 [dev] (Black Forest Labs 12B Flagship)</option>
+            <option value="flux-schnell">FLUX.1 [schnell] (4-Step Turbo Distilled)</option>
+            <option value="seedream-5.0">Seedream 5.0 Ultra (Cinematic Photorealism)</option>
+            <option value="ideogram-v2">Ideogram 2.0 (Accurate Typography & Logos)</option>
+            <option value="nano-banana-2">Nano Banana 2 (Stylized Illustration)</option>
+            <option value="flux-kontext-pro">FLUX Kontext Pro (14-Image Multi-Ref)</option>
+          </select>
+
+          <div>
+            <label class="text-xs font-semibold text-zinc-300 uppercase tracking-wider block mb-1.5">Prompt</label>
+            <textarea id="img-prompt" rows="3" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-violet-500 focus:outline-none" placeholder="A futuristic cyberpunk street illuminated by neon signs in rain, photorealistic, 8k, cinematic composition..."></textarea>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="text-xs font-semibold text-zinc-300 uppercase tracking-wider block mb-1.5">Aspect Ratio</label>
+              <div class="grid grid-cols-3 gap-2 text-xs">
+                <button type="button" onclick="setRatio('16:9')" class="ratio-btn py-1.5 px-2 bg-zinc-900 border border-violet-500 text-violet-300 rounded text-center">16:9</button>
+                <button type="button" onclick="setRatio('9:16')" class="ratio-btn py-1.5 px-2 bg-zinc-900 border border-zinc-700 rounded text-center">9:16</button>
+                <button type="button" onclick="setRatio('1:1')" class="ratio-btn py-1.5 px-2 bg-zinc-900 border border-zinc-700 rounded text-center">1:1</button>
+              </div>
+            </div>
+            <div>
+              <label class="text-xs font-semibold text-zinc-300 uppercase tracking-wider block mb-1.5">Seed</label>
+              <input type="number" id="img-seed" value="-1" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-sm text-zinc-300" placeholder="-1 for random">
+            </div>
+          </div>
+
+          <button onclick="generateImage()" id="btn-generate-image" class="w-full py-3 px-4 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-semibold rounded-lg shadow-lg shadow-violet-600/30 transition flex items-center justify-center gap-2">
+            ✨ Generate Image
+          </button>
+        </div>
+      </div>
+
+      <!-- VIDEO STUDIO TAB -->
+      <div id="tab-video" class="space-y-4 hidden">
+        <div class="glass-card p-5 rounded-xl space-y-4">
+          <div class="flex items-center justify-between">
+            <label class="text-xs font-semibold text-zinc-300 uppercase tracking-wider">Video Model</label>
+            <span class="text-xs text-violet-400 font-mono">$0.20 / run</span>
+          </div>
+          <select id="vid-model" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-violet-500 focus:outline-none">
+            <option value="kling-v3-pro">Kling v3 Pro (Cinematic Physics & Motion)</option>
+            <option value="sora-2-turbo">Sora 2 Turbo (OpenAI World Continuity)</option>
+            <option value="veo-3-cinematic">Veo 3 Cinematic (Google DeepMind Volumetric)</option>
+            <option value="wan-2.6-t2v">Wan 2.6 T2V (Alibaba Open Weights)</option>
+            <option value="seedance-2.5-t2v">Seedance 2.5 T2V (Audio-Synced Video)</option>
+            <option value="kling-v2.1-i2v">Kling v2.1 I2V (Image-to-Video Motion)</option>
+            <option value="wan-2.1-i2v">Wan 2.1 I2V (Local Wan2GP / Cloud)</option>
+          </select>
+
+          <div>
+            <label class="text-xs font-semibold text-zinc-300 uppercase tracking-wider block mb-1.5">Prompt</label>
+            <textarea id="vid-prompt" rows="3" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-violet-500 focus:outline-none" placeholder="Drone flythrough over a misty redwood forest at sunrise, sunlight streaming through branches..."></textarea>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="text-xs font-semibold text-zinc-300 uppercase tracking-wider block mb-1.5">Duration</label>
+              <select id="vid-duration" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-sm">
+                <option value="5">5 Seconds</option>
+                <option value="10">10 Seconds</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs font-semibold text-zinc-300 uppercase tracking-wider block mb-1.5">Resolution</label>
+              <select id="vid-resolution" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-sm">
+                <option value="720p">720p HD</option>
+                <option value="1080p">1080p Full HD</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-4 text-xs text-zinc-300">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="vid-audio" checked class="rounded border-zinc-700 text-violet-600 focus:ring-violet-500">
+              Generate Synchronized Audio
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="vid-highbitrate" checked class="rounded border-zinc-700 text-violet-600 focus:ring-violet-500">
+              High Bitrate Mode
+            </label>
+          </div>
+
+          <button onclick="generateVideo()" id="btn-generate-video" class="w-full py-3 px-4 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-semibold rounded-lg shadow-lg shadow-violet-600/30 transition flex items-center justify-center gap-2">
+            🎬 Generate Video
+          </button>
+        </div>
+      </div>
+
+      <!-- LIP SYNC TAB -->
+      <div id="tab-lipsync" class="space-y-4 hidden">
+        <div class="glass-card p-5 rounded-xl space-y-4">
+          <label class="text-xs font-semibold text-zinc-300 uppercase tracking-wider block">Lip Sync Model</label>
+          <select id="lipsync-model" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-violet-500 focus:outline-none">
+            <option value="infinite-talk-i2v">Infinite Talk I2V (Natural Blinks & Head Motion)</option>
+            <option value="wan-2.2-speech-to-video">Wan 2.2 Speech to Video (Alibaba Multi-Lingual)</option>
+          </select>
+
+          <div>
+            <label class="text-xs font-semibold text-zinc-300 uppercase tracking-wider block mb-1.5">Face/Character Image or Video URL</label>
+            <input type="text" id="lipsync-image" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-sm" placeholder="https://... image or video with clear face">
+          </div>
+
+          <div>
+            <label class="text-xs font-semibold text-zinc-300 uppercase tracking-wider block mb-1.5">Audio File URL</label>
+            <input type="text" id="lipsync-audio" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-sm" placeholder="https://... voice track mp3/wav">
+          </div>
+
+          <button onclick="generateLipSync()" id="btn-generate-lipsync" class="w-full py-3 px-4 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-semibold rounded-lg shadow-lg shadow-violet-600/30 transition flex items-center justify-center gap-2">
+            👄 Sync Lips & Animate Face
+          </button>
+        </div>
+      </div>
+
+      <!-- WORKFLOW TAB -->
+      <div id="tab-workflow" class="space-y-4 hidden">
+        <div class="glass-card p-5 rounded-xl space-y-4">
+          <label class="text-xs font-semibold text-zinc-300 uppercase tracking-wider block">Pipeline Template</label>
+          <div class="grid grid-cols-2 gap-3">
+            <button onclick="selectWorkflow('ai-influencer')" id="wf-btn-influencer" class="p-3 text-left rounded-lg border border-violet-500 bg-violet-500/10">
+              <div class="font-semibold text-sm text-white">AI Influencer Studio</div>
+              <div class="text-xs text-zinc-400 mt-1">Portrait Anchor → TTS Voice → Lip Sync Talking Video</div>
+            </button>
+            <button onclick="selectWorkflow('popcorn-storyboard')" id="wf-btn-storyboard" class="p-3 text-left rounded-lg border border-zinc-700 bg-zinc-900">
+              <div class="font-semibold text-sm text-white">Popcorn Storyboarding</div>
+              <div class="text-xs text-zinc-400 mt-1">Script Keyframe → 70mm Motion → Soundtrack</div>
+            </button>
+          </div>
+
+          <div>
+            <label class="text-xs font-semibold text-zinc-300 uppercase tracking-wider block mb-1.5">Character / Scene Description</label>
+            <input type="text" id="wf-prompt" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-sm" value="charismatic AI tech reporter explaining breakthrough news in clean modern studio">
+          </div>
+
+          <div>
+            <label class="text-xs font-semibold text-zinc-300 uppercase tracking-wider block mb-1.5">Speech Script</label>
+            <textarea id="wf-script" rows="2" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-sm">Hello and welcome back to the channel! Today we are diving into the ultimate generative AI breakthroughs.</textarea>
+          </div>
+
+          <button onclick="runWorkflow()" id="btn-run-workflow" class="w-full py-3 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold rounded-lg shadow-lg shadow-emerald-600/30 transition flex items-center justify-center gap-2">
+            🚀 Execute Full Pipeline
+          </button>
+        </div>
+      </div>
+
+      <!-- CATALOG TAB -->
+      <div id="tab-catalog" class="space-y-4 hidden">
+        <div class="glass-card p-4 rounded-xl flex gap-3">
+          <input type="text" id="catalog-search" oninput="filterCatalog()" placeholder="Search 400+ models (e.g. flux, kling, sora, audio, 4k)..." class="flex-1 bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-violet-500">
+          <select id="catalog-category-filter" onchange="filterCatalog()" class="bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm">
+            <option value="">All Categories</option>
+            <option value="image">Text-to-Image</option>
+            <option value="video">Text-to-Video</option>
+            <option value="i2v">Image-to-Video</option>
+            <option value="lipsync">Lip Sync</option>
+            <option value="audio">Audio</option>
+          </select>
+        </div>
+        <div id="catalog-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[600px] overflow-y-auto pr-1"></div>
+      </div>
+
+    </div>
+
+    <!-- Right Preview & Output Panel (5 Cols) -->
+    <div class="lg:col-span-5 space-y-4">
+      <div class="glass-card p-5 rounded-xl h-full flex flex-col">
+        <div class="flex items-center justify-between pb-3 border-b border-zinc-800">
+          <h2 class="text-sm font-semibold text-zinc-200 uppercase tracking-wider flex items-center gap-2">
+            <span>📺</span> Generation Output
+          </h2>
+          <span id="job-timer" class="text-xs font-mono text-zinc-500">0.0s</span>
+        </div>
+
+        <div id="output-container" class="flex-1 min-h-[360px] flex flex-col items-center justify-center p-4 text-center">
+          <div id="output-placeholder" class="text-zinc-500 space-y-2">
+            <div class="text-4xl">🎨</div>
+            <div class="text-sm font-medium">Ready for generation</div>
+            <div class="text-xs text-zinc-600 max-w-xs">Select model, enter prompt, and click generate to view real-time results.</div>
+          </div>
+          <div id="output-loading" class="hidden space-y-3">
+            <div class="h-10 w-10 border-4 border-violet-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+            <div class="text-sm text-violet-300 font-medium animate-pulse" id="loading-text">Submitting job...</div>
+          </div>
+          <div id="output-media" class="hidden w-full space-y-3"></div>
+        </div>
+
+        <!-- CLI / cURL snippet drawer -->
+        <div class="mt-auto pt-3 border-t border-zinc-800 text-xs text-zinc-400">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="font-mono">Rust CLI Equivalent</span>
+            <button onclick="copyCliCommand()" class="text-violet-400 hover:text-violet-300 text-[11px]">Copy</button>
+          </div>
+          <pre id="cli-preview" class="bg-zinc-950 p-2.5 rounded border border-zinc-800 font-mono text-[11px] overflow-x-auto text-zinc-300">open-genai generate image --model flux-dev --prompt "..."</pre>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    let activeRatio = '16:9';
+    let selectedWorkflowId = 'ai-influencer';
+
+    function switchTab(tabId) {
+      ['image', 'video', 'lipsync', 'workflow', 'catalog'].forEach(t => {
+        document.getElementById(`tab-${t}`).classList.add('hidden');
+        document.getElementById(`tab-btn-${t}`).classList.remove('active-tab');
+      });
+      document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+      document.getElementById(`tab-btn-${tabId}`).classList.add('active-tab');
+      if (tabId === 'catalog') filterCatalog();
+    }
+
+    function setRatio(ratio) {
+      activeRatio = ratio;
+      document.querySelectorAll('.ratio-btn').forEach(btn => {
+        if (btn.innerText === ratio) {
+          btn.classList.add('border-violet-500', 'text-violet-300');
+          btn.classList.remove('border-zinc-700');
+        } else {
+          btn.classList.remove('border-violet-500', 'text-violet-300');
+          btn.classList.add('border-zinc-700');
+        }
+      });
+      updateCli();
+    }
+
+    function updateCli() {
+      const prompt = document.getElementById('img-prompt').value || '...';
+      const model = document.getElementById('img-model').value;
+      document.getElementById('cli-preview').innerText = `open-genai generate image --model ${model} --ratio "${activeRatio}" --prompt "${prompt.slice(0, 30)}..."`;
+    }
+
+    document.getElementById('img-prompt').addEventListener('input', updateCli);
+    document.getElementById('img-model').addEventListener('change', updateCli);
+
+    async function generateImage() {
+      showLoading('Submitting image generation task...');
+      const payload = {
+        model: document.getElementById('img-model').value,
+        prompt: document.getElementById('img-prompt').value,
+        aspect_ratio: activeRatio,
+        seed: parseInt(document.getElementById('img-seed').value, 10),
+      };
+
+      try {
+        const resp = await fetch('/api/v1/generate/image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await resp.json();
+        showResult(data);
+      } catch (err) {
+        showError(err.message);
+      }
+    }
+
+    async function generateVideo() {
+      showLoading('Synthesizing cinematic video frames...');
+      const payload = {
+        model: document.getElementById('vid-model').value,
+        prompt: document.getElementById('vid-prompt').value,
+        duration: parseInt(document.getElementById('vid-duration').value, 10),
+        resolution: document.getElementById('vid-resolution').value,
+        generate_audio: document.getElementById('vid-audio').checked,
+        high_bitrate: document.getElementById('vid-highbitrate').checked,
+      };
+
+      try {
+        const resp = await fetch('/api/v1/generate/video', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await resp.json();
+        showResult(data);
+      } catch (err) {
+        showError(err.message);
+      }
+    }
+
+    async function generateLipSync() {
+      showLoading('Choreographing facial expressions & lip sync...');
+      const payload = {
+        model: document.getElementById('lipsync-model').value,
+        image_url: document.getElementById('lipsync-image').value,
+        audio_url: document.getElementById('lipsync-audio').value,
+      };
+
+      try {
+        const resp = await fetch('/api/v1/lipsync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await resp.json();
+        showResult(data);
+      } catch (err) {
+        showError(err.message);
+      }
+    }
+
+    function selectWorkflow(id) {
+      selectedWorkflowId = id;
+      const infBtn = document.getElementById('wf-btn-influencer');
+      const sbBtn = document.getElementById('wf-btn-storyboard');
+      if (id === 'ai-influencer') {
+        infBtn.className = 'p-3 text-left rounded-lg border border-violet-500 bg-violet-500/10';
+        sbBtn.className = 'p-3 text-left rounded-lg border border-zinc-700 bg-zinc-900';
+      } else {
+        sbBtn.className = 'p-3 text-left rounded-lg border border-violet-500 bg-violet-500/10';
+        infBtn.className = 'p-3 text-left rounded-lg border border-zinc-700 bg-zinc-900';
+      }
+    }
+
+    async function runWorkflow() {
+      showLoading('Running multi-step DAG pipeline...');
+      const payload = {
+        template_id: selectedWorkflowId,
+        inputs: {
+          prompt: document.getElementById('wf-prompt').value,
+          speech_script: document.getElementById('wf-script').value,
+          scene_prompt: document.getElementById('wf-prompt').value,
+          music_genre: 'Electronic synthwave ambient',
+        }
+      };
+
+      try {
+        const resp = await fetch('/api/v1/workflows/run', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await resp.json();
+        showWorkflowResult(data);
+      } catch (err) {
+        showError(err.message);
+      }
+    }
+
+    async function filterCatalog() {
+      const q = document.getElementById('catalog-search').value;
+      const cat = document.getElementById('catalog-category-filter').value;
+      const resp = await fetch(`/api/v1/models?search=${encodeURIComponent(q)}&category=${encodeURIComponent(cat)}`);
+      const data = await resp.json();
+
+      const grid = document.getElementById('catalog-grid');
+      grid.innerHTML = data.models.map(m => `
+        <div class="glass-card p-3.5 rounded-lg border border-zinc-800 hover:border-violet-500/50 transition">
+          <div class="flex items-start justify-between">
+            <h3 class="font-bold text-sm text-white">${m.name}</h3>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-800 text-zinc-300">${m.category}</span>
+          </div>
+          <p class="text-xs text-zinc-400 mt-1 line-clamp-2">${m.description}</p>
+          <div class="mt-2.5 flex items-center justify-between text-[11px] text-zinc-500 font-mono">
+            <span>${m.id}</span>
+            <span class="text-violet-400">$${m.cost_per_run}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function showLoading(msg) {
+      document.getElementById('output-placeholder').classList.add('hidden');
+      document.getElementById('output-media').classList.add('hidden');
+      document.getElementById('output-loading').classList.remove('hidden');
+      document.getElementById('loading-text').innerText = msg;
+    }
+
+    function showResult(data) {
+      document.getElementById('output-loading').classList.add('hidden');
+      const mediaDiv = document.getElementById('output-media');
+      mediaDiv.classList.remove('hidden');
+
+      const url = data.primary_url || data.outputs?.[0];
+      if (!url) {
+        mediaDiv.innerHTML = `<div class="p-3 bg-zinc-900 rounded text-xs text-zinc-300">Job completed with request ID: ${data.request_id}</div>`;
+        return;
+      }
+
+      if (url.endsWith('.mp4') || url.includes('video')) {
+        mediaDiv.innerHTML = `
+          <video controls autoplay loop class="w-full rounded-lg border border-zinc-800 shadow-xl">
+            <source src="${url}" type="video/mp4">
+          </video>
+          <a href="${url}" target="_blank" class="block text-center text-xs text-violet-400 hover:underline">Download MP4</a>
+        `;
+      } else {
+        mediaDiv.innerHTML = `
+          <img src="${url}" class="w-full rounded-lg border border-zinc-800 shadow-xl object-contain max-h-[400px]">
+          <a href="${url}" target="_blank" class="block text-center text-xs text-violet-400 hover:underline">Open Full Image</a>
+        `;
+      }
+    }
+
+    function showWorkflowResult(report) {
+      document.getElementById('output-loading').classList.add('hidden');
+      const mediaDiv = document.getElementById('output-media');
+      mediaDiv.classList.remove('hidden');
+
+      const stepsHtml = Object.values(report.steps).map(s => `
+        <div class="flex items-center justify-between p-2 bg-zinc-900 rounded text-xs">
+          <span class="font-medium text-zinc-300">${s.step_id} (${s.model_id})</span>
+          <span class="text-emerald-400 font-mono">${s.duration_seconds.toFixed(2)}s</span>
+        </div>
+      `).join('');
+
+      mediaDiv.innerHTML = `
+        <div class="space-y-2 text-left w-full">
+          <div class="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Pipeline Steps Executed</div>
+          ${stepsHtml}
+          ${report.final_output_url ? `<a href="${report.final_output_url}" target="_blank" class="mt-3 block text-center py-2 px-3 bg-violet-600 hover:bg-violet-500 rounded font-semibold text-xs text-white">View Final Output Asset</a>` : ''}
+        </div>
+      `;
+    }
+
+    function showError(err) {
+      document.getElementById('output-loading').classList.add('hidden');
+      const mediaDiv = document.getElementById('output-media');
+      mediaDiv.classList.remove('hidden');
+      mediaDiv.innerHTML = `<div class="p-3 bg-red-950/50 border border-red-800 text-red-300 rounded text-xs">${err}</div>`;
+    }
+
+    function copyCliCommand() {
+      navigator.clipboard.writeText(document.getElementById('cli-preview').innerText);
+      alert('CLI command copied to clipboard!');
+    }
+
+    function openSettingsModal() {
+      const current = localStorage.getItem('muapi_key') || '';
+      const key = prompt('Enter your Muapi.ai API Key (or leave empty to use server default / mock):', current);
+      if (key !== null) {
+        localStorage.setItem('muapi_key', key);
+      }
+    }
+  </script>
+</body>
+</html>

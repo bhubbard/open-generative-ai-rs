@@ -1,0 +1,41 @@
+[package]
+name = "open-generative-ai-rs"
+version = "0.1.0"
+edition = "2021"
+authors = ["Brandon Hubbard <bhubbard@users.noreply.github.com>"]
+description = "High-performance Rust engine, multi-provider API gateway, workflow runner, and studio for Open Generative AI"
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/bhubbard/open-generative-ai-rs"
+keywords = ["generative-ai", "image-generation", "video-generation", "workflow", "muapi"]
+categories = ["multimedia::video", "command-line-utilities", "web-programming::http-server"]
+
+[lib]
+name = "open_generative_ai"
+path = "src/lib.rs"
+
+[[bin]]
+name = "open-genai"
+path = "src/bin/main.rs"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = { version = "1.0", features = ["preserve_order"] }
+serde_yaml = "0.9"
+thiserror = "2.0"
+clap = { version = "4.5", features = ["derive", "env"] }
+tokio = { version = "1.40", features = ["full"] }
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1.13", features = ["v4", "serde"] }
+axum = { version = "0.8", features = ["multipart"] }
+tower = { version = "0.5", features = ["util"] }
+tower-http = { version = "0.6", features = ["cors", "trace"] }
+reqwest = { version = "0.12", features = ["json", "multipart", "stream"] }
+async-trait = "0.1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+futures-util = "0.3"
+rand = "0.9"
+
+[dev-dependencies]
+tokio-test = "0.4"
