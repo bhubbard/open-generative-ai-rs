@@ -5,6 +5,7 @@ use async_trait::async_trait;
 use std::collections::BTreeMap;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
+#[derive(Debug)]
 pub struct MockProvider {
     counter: AtomicUsize,
 }

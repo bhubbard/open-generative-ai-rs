@@ -51,6 +51,7 @@ pub struct WorkflowReport {
     pub final_output_url: Option<String>,
 }
 
+#[derive(Debug)]
 pub struct WorkflowEngine {
     provider: Arc<dyn Provider>,
 }
@@ -128,6 +129,18 @@ impl WorkflowEngine {
         inputs: &BTreeMap<String, String>,
         outputs: &BTreeMap<String, String>,
     ) -> serde_json::Value {
+        Self::substitute_variables_depth(val, inputs, outputs, 0)
+    }
+
+    fn substitute_variables_depth(
+        val: &serde_json::Value,
+        inputs: &BTreeMap<String, String>,
+        outputs: &BTreeMap<String, String>,
+        depth: usize,
+    ) -> serde_json::Value {
+        if depth > 64 {
+            return val.clone();
+        }
         match val {
             serde_json::Value::String(s) => {
                 let mut resolved = s.clone();
@@ -144,14 +157,17 @@ impl WorkflowEngine {
             serde_json::Value::Object(map) => {
                 let mut new_map = serde_json::Map::new();
                 for (k, v) in map {
-                    new_map.insert(k.clone(), Self::substitute_variables(v, inputs, outputs));
+                    new_map.insert(
+                        k.clone(),
+                        Self::substitute_variables_depth(v, inputs, outputs, depth + 1),
+                    );
                 }
                 serde_json::Value::Object(new_map)
             }
             serde_json::Value::Array(arr) => {
                 let new_arr = arr
                     .iter()
-                    .map(|v| Self::substitute_variables(v, inputs, outputs))
+                    .map(|v| Self::substitute_variables_depth(v, inputs, outputs, depth + 1))
                     .collect();
                 serde_json::Value::Array(new_arr)
             }

@@ -19,7 +19,7 @@ use tower_http::cors::{Any, CorsLayer};
 
 pub const EMBEDDED_STUDIO_HTML: &str = include_str!("../assets/studio.html");
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct AppState {
     pub provider: Arc<dyn Provider>,
     pub workflow_engine: Arc<WorkflowEngine>,

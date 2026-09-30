@@ -10,7 +10,7 @@ use async_trait::async_trait;
 
 /// Pluggable backend provider trait
 #[async_trait]
-pub trait Provider: Send + Sync {
+pub trait Provider: Send + Sync + std::fmt::Debug {
     /// Human-readable provider identifier
     fn name(&self) -> &'static str;
 

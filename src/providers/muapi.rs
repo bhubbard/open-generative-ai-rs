@@ -10,6 +10,7 @@ use std::collections::BTreeMap;
 use std::time::Duration;
 use tracing::{debug, info};
 
+#[derive(Debug)]
 pub struct MuapiClient {
     client: Client,
     base_url: String,

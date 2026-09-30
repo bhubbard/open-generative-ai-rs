@@ -1,6 +1,6 @@
 [package]
 name = "open-generative-ai-rs"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ["Brandon Hubbard <bhubbard@users.noreply.github.com>"]
 description = "High-performance Rust engine, multi-provider API gateway, workflow runner, and studio for Open Generative AI"
